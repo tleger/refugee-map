@@ -1,0 +1,74 @@
+body {
+  margin: 0;
+  background-color: #2A2C39;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 300;
+  font-size: 10px;
+}
+#container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+}
+#map-holder {
+  flex: 6;
+}
+#bar-container {
+  display: flex;
+  flex-direction: column;
+  flex: 2;
+  height: 100vh;
+}
+#destination {
+  flex: 5;
+}
+#origin {
+  flex: 5;
+}
+
+svg rect {
+  fill: #2A2C39;   /* map background colour */
+}
+.country{
+  fill: #d0d0d0;
+  opacity: 0.8;   /* country colour */
+  stroke: #2A2C39; /* country border colour */
+  stroke-width: 0.2px; /* country border width */
+}
+
+.country:hover{
+  opacity: 0.6;   /* country colour */
+}
+.country-on{
+  fill: #4B5358;   /* highlight colour for selected country */
+}
+.countryLabel{
+  display: none;   /* hide all country labels by default */
+}
+.countryName{
+  fill: #FFFAFF;   /* country label text colour */
+}
+.countryLabelBg{
+  fill: #7D98A1;   /* country label background colour */
+}
+
+.bar {
+  fill: #d0d0d0;
+}
+
+.bar:hover {
+  opacity: 0.6;
+}
+
+.axis path {
+  stroke: white;
+}
+
+.axis text {
+  fill: #d0d0d0;
+}
+
+.bar-title {
+  fill: white;
+  text-anchor: middle;
+}
