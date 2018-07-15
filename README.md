@@ -4,3 +4,5 @@ A map built in d3 showing UNHRC refugee data. Map shows data about where refugee
 
 
 Data is sourced from: http://popstats.unhcr.org/en/overview
+
+Map is published here: https://tleger.github.io/refugee-map/
