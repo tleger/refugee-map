@@ -161,6 +161,8 @@
 
 
 
+
+
         d3.queue()
         .defer(d3.json, 'custom.json')
         .defer(d3.csv, 'refugees.csv')
@@ -284,6 +286,11 @@
 
             isCountry = false
           })
+
+          svg.append("text")
+        .attr("transform","translate( 20, " + ($("#map-holder").height() - 20) + ")")
+        .text("Data as at mid-2016, source: http://popstats.unhcr.org/en/overview")
+        .style("fill","white")
 
 
         }
