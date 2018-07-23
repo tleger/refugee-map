@@ -159,10 +159,6 @@
         .attr("transform","translate(" + ($("#destination").width()/2)+ ",40)")
         .text("")
 
-
-
-
-
         d3.queue()
         .defer(d3.json, 'custom.json')
         .defer(d3.csv, 'refugees.csv')
@@ -171,13 +167,27 @@
             console.error('error loading')
           }
           else {
-
             destinationtitle.text("Refugee host countries")
             origintitle.text("Refugee origin countries")
 
-
-
             refugeedata = csv
+
+            var countryPairTotals = refugeedata.filter(function(d) {return d["Type of population"] == "Total Refugee and people in refugee-like situations"})
+            var originTotals = d3.nest().key(function(d) {return d.Origin}).rollup(function(v) {return d3.sum(v, function(d) {return d.Population})}).entries(countryPairTotals)
+            var destinationTotals = d3.nest().key(function(d) {return d["Country/territory of asylum/residence"]}).rollup(function(v) {return d3.sum(v, function(d) {return d.Population})}).entries(countryPairTotals)
+
+            debugger;
+
+            var originRedColorScale = d3.scalePow().exponent(0.3).range([208,208]).domain(d3.extent(originTotals.map(d=> d.value+1)))
+            var originBlueColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(originTotals.map(d=> d.value+1)))
+            var originGreenColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(originTotals.map(d=> d.value+1)))
+            var originOpacityScale = d3.scalePow().exponent(0.3).range([0.6,1]).domain(d3.extent(originTotals.map(d=> d.value+1)))
+
+            var destinationRedColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(destinationTotals.map(d=> d.value+1)))
+            var destinationBlueColorScale = d3.scalePow().exponent(0.3).range([208,208]).domain(d3.extent(destinationTotals.map(d=> d.value+1)))
+            var destinationGreenColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(destinationTotals.map(d=> d.value+1)))
+            var destinationOpacityScale = d3.scalePow().exponent(0.3).range([0.6,1]).domain(d3.extent(destinationTotals.map(d=> d.value+1)))
+
             countriesGroup = svg.append("g").attr("id", "map");
           // add a background rectangle
           countriesGroup
@@ -198,8 +208,6 @@
             return "country" + d.properties.iso_a3;
           })
           .attr("class", "country")
-      //      .attr("stroke-width", 10)
-      //      .attr("stroke", "#ff0000")
             // add a mouseover action to show name label for feature/country
             .on("mouseover", function(d, i) {
               d3.select("#countryLabel" + d.properties.iso_a3).style("display", "block");
@@ -212,6 +220,8 @@
               isCountry = true
               var country = d.properties.name
               createBar(country)
+              var countryPairs = countryPairTotals.filter(function(d) {return d["Country/territory of asylum/residence"] == country || d["Origin"] == country })
+              // getColourForData(countryPairs)
               d3.selectAll(".country").classed("country-on", false);
               d3.select(this).classed("country-on", true);
             // boxZoom(path.bounds(d), path.centroid(d), 20);
@@ -275,26 +285,75 @@
           });
           initiateZoom();
           createDefault();
+          getColourForData(countryPairTotals)
 
-          countriesGroup.on("click", function() {
-            if (isCountry == false) {
-              d3.selectAll(".country").classed("country-on", false);
-              createDefault()
-              destinationtitle.text("Countries of Asylum - Global")
-              origintitle.text("Countries of Origin - Global")
-            }
+          // d3.selectAll(".country").style("fill", function(d) {
+          //   var temp = d.properties.name
+          //   if (map_to_unhrc[temp]!== undefined){
+          //     temp = map_to_unhrc[temp]
+          //   }
+          //   try {
+          //     var red = d3.min([originRedColorScale(originTotals.filter(function(e) {return e.key == temp})[0].value),destinationRedColorScale(destinationTotals.filter(function(e) {return e.key == temp})[0].value)])
+          //     var blue = d3.min([originBlueColorScale(originTotals.filter(function(e) {return e.key == temp})[0].value),destinationBlueColorScale(destinationTotals.filter(function(e) {return e.key == temp})[0].value)])
+          //     var green = d3.min([originGreenColorScale(originTotals.filter(function(e) {return e.key == temp})[0].value),destinationGreenColorScale(destinationTotals.filter(function(e) {return e.key == temp})[0].value)])
 
-            isCountry = false
-          })
+          //     if (d.properties.name=="Turkey"){
+          //       debugger;
+          //     }
+          //   } catch (e) {
+          //     return "rgb(208,208,208)"
+          //   } finally {
+          //     return "rgb("+String(red)+","+String(green)+"," + String(blue)+")"
+          //   }
+          // }).style("opacity", function(d){
+          //   var temp = d.properties.name
+          //   if (map_to_unhrc[temp]!== undefined){
+          //     temp = map_to_unhrc[temp]
+          //   }
+          //   try {
+          //     var opacity = d3.max([originOpacityScale(originTotals.filter(function(e) {return e.key == temp})[0].value),destinationOpacityScale(destinationTotals.filter(function(e) {return e.key == temp})[0].value)])
+          //   } catch (e) {
+          //     console.log(d.properties.name)
+          //     var error = true
+          //     return 0
+          //   } finally {
+          //     if(error == true){
+          //       return 0.6
+          //     } else {
+          //       return opacity
+          //     }
+          //     // console.log(d.properties.name)
+          //     // console.log(opacity)
+          //     // return opacity
+          //   }
+          // })
 
-          svg.append("text")
-        .attr("transform","translate( 20, " + ($("#map-holder").height() - 20) + ")")
-        .text("Data as at mid-2016, source: http://popstats.unhcr.org/en/overview")
-        .style("fill","white")
+          // d3.selectAll(".country").style("fill", "rgb(0,0,"+ function(d) {
+          //   debugger;
+          //   return originColorScale(originTotals.filter(function(e) {return e.key == map_to_unhrc[d.properties.name]})[0].value)
+          // } +")")
 
 
-        }
-      })
+
+    countriesGroup.on("click", function() {
+      if (isCountry == false) {
+        d3.selectAll(".country").classed("country-on", false);
+        createDefault()
+        destinationtitle.text("Countries of Asylum - Global")
+        origintitle.text("Countries of Origin - Global")
+      }
+
+      isCountry = false
+    })
+
+    svg.append("text")
+    .attr("transform","translate( 20, " + ($("#map-holder").height() - 20) + ")")
+    .text("Data as at mid-2016, source: http://popstats.unhcr.org/en/overview")
+    .style("fill","white")
+
+
+  }
+})
 
     function createDefault(){
 
@@ -417,126 +476,188 @@
 
     }
 
+    function getColourForData(data) {
 
-    var unhrc_to_map = {
-      "Antigua and Barbuda" :"Antigua and Barb.",
-      "Bolivia (Plurinational State of)" :"Bolivia",
-      "Bosnia and Herzegovina" :"Bosnia and Herz.",
-      "British Virgin Islands" :"British Virgin Is.",
-      "Brunei Darussalam" :"Brunei",
-      "Côte d'Ivoire" :"Ivory Coast",
-      "Cabo Verde" :"Cape Verde",
-      "Cayman Islands" :"Cayman Is.",
-      "China, Hong Kong SAR" :"Hong Kong",
-      "China, Macao SAR" :"Macao",
-      "Congo, Republic of" :"Congo",
-      "Cook Islands" :"Cook Is.",
-      "Curaçao" :"",
-      "Czechia" :"Czech Rep.",
-      "Dem. People's Rep. of Korea" :"Dem. Rep. Korea",
-      "Dem. Rep. of the Congo" :"Dem. Rep. Congo",
-      "Equatorial Guinea" :"Eq. Guinea",
-      "French Guiana" :"",
-      "Gibraltar" :"",
-      "Guadeloupe" :"",
-      "Iran (Islamic Rep. of)" :"Iran",
-      "Lao People's Dem. Rep." :"Lao PDR",
-      "Maldives" :"",
-      "Marshall Islands" :"Marshall Is.",
-      "Mauritius" :"",
-      "Micronesia (Federated States of)" :"Micronesia",
-      "Palestinian" :"Palestine",
-      "Rep. of Korea" :"Korea",
-      "Rep. of Moldova" :"Moldova",
-      "Russian Federation" :"Russia",
-      "Saint Kitts and Nevis" :"St. Kitts and Nevis",
-      "Saint Vincent and the Grenadines" :"St. Vin. and Gren.",
-      "Saint-Pierre-et-Miquelon" :"St. Pierre and Miquelon",
-      "Sao Tome and Principe" :"",
-      "Serbia and Kosovo: S/RES/1244 (1999)" :"Serbia",
-      "Seychelles" :"",
-      "Sint Maarten (Dutch part)" :"",
-      "Solomon Islands" :"Solomon Is.",
-      "South Sudan" :"S. Sudan",
-      "Stateless" :"",
-      "Syrian Arab Rep." :"Syria",
-      "The former Yugoslav Republic of Macedonia" :"Macedonia",
-      "Tibetan" :"",
-      "Turks and Caicos Islands" :"Turks and Caicos Is.",
-      "Tuvalu" :"",
-      "United Rep. of Tanzania" :"Tanzania",
-      "United States of America" :"United States",
-      "Various" :"",
-      "Venezuela (Bolivarian Republic of)" :"Venezuela",
-      "Viet Nam" :"Vietnam",
-      "Wallis and Futuna Islands " :"Wallis and Futuna Is.",
-      "Western Sahara" :"W. Sahara"
-    }
+      // d3.selectAll(".country").style("fill","rgb(208,208,208").style("opacity",0.6)
+
+      // debugger;
+
+      var originTotals = d3.nest().key(function(d) {return d.Origin}).rollup(function(v) {return d3.sum(v, function(d) {return d.Population})}).entries(data)
+      var destinationTotals = d3.nest().key(function(d) {return d["Country/territory of asylum/residence"]}).rollup(function(v) {return d3.sum(v, function(d) {return d.Population})}).entries(data)
+
+      var originRedColorScale = d3.scalePow().exponent(0.3).range([208,208]).domain(d3.extent(originTotals.map(d=> d.value+1)))
+      var originBlueColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(originTotals.map(d=> d.value+1)))
+      var originGreenColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(originTotals.map(d=> d.value+1)))
+      var originOpacityScale = d3.scalePow().exponent(0.3).range([0.6,1]).domain(d3.extent(originTotals.map(d=> d.value+1)))
+
+      var destinationRedColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(destinationTotals.map(d=> d.value+1)))
+      var destinationBlueColorScale = d3.scalePow().exponent(0.3).range([208,208]).domain(d3.extent(destinationTotals.map(d=> d.value+1)))
+      var destinationGreenColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(destinationTotals.map(d=> d.value+1)))
+      var destinationOpacityScale = d3.scalePow().exponent(0.3).range([0.6,1]).domain(d3.extent(destinationTotals.map(d=> d.value+1)))
+
+      d3.selectAll(".country").style("fill", function(d) {
+        var temp = d.properties.name
+        if (map_to_unhrc[temp]!== undefined){
+          temp = map_to_unhrc[temp]
+        }
+        try {
+          var red = d3.min([originRedColorScale(originTotals.filter(function(e) {return e.key == temp})[0].value),destinationRedColorScale(destinationTotals.filter(function(e) {return e.key == temp})[0].value)])
+          var blue = d3.min([originBlueColorScale(originTotals.filter(function(e) {return e.key == temp})[0].value),destinationBlueColorScale(destinationTotals.filter(function(e) {return e.key == temp})[0].value)])
+          var green = d3.min([originGreenColorScale(originTotals.filter(function(e) {return e.key == temp})[0].value),destinationGreenColorScale(destinationTotals.filter(function(e) {return e.key == temp})[0].value)])
+
+        } catch (e) {
+          return "rgb(208,208,208)"
+        } finally {
+          return "rgb("+String(red)+","+String(green)+"," + String(blue)+")"
+        }
+      }
+      )
+    .style("opacity", function(d){
 
 
-    var map_to_unhrc = {
-      "Antigua and Barb." :"Antigua and Barbuda",
-      "Bolivia" :"Bolivia (Plurinational State of)",
-      "Bosnia and Herz." :"Bosnia and Herzegovina",
-      "British Virgin Is." :"British Virgin Islands",
-      "Brunei" :"Brunei Darussalam",
-      "Ivory Coast" :"Côte d'Ivoire",
-      "Cape Verde" :"Cabo Verde",
-      "Cayman Is." :"Cayman Islands",
-      "Hong Kong" :"China, Hong Kong SAR",
-      "Macao" :"China, Macao SAR",
-      "Congo" :"Congo, Republic of",
-      "Cook Is." :"Cook Islands",
-      "" :"Curaçao",
-      "Czech Rep." :"Czechia",
-      "Dem. Rep. Korea" :"Dem. People's Rep. of Korea",
-      "Dem. Rep. Congo" :"Dem. Rep. of the Congo",
-      "Eq. Guinea" :"Equatorial Guinea",
-      "" :"French Guiana",
-      "" :"Gibraltar",
-      "" :"Guadeloupe",
-      "Iran" :"Iran (Islamic Rep. of)",
-      "Lao PDR" :"Lao People's Dem. Rep.",
-      "" :"Maldives",
-      "Marshall Is." :"Marshall Islands",
-      "" :"Mauritius",
-      "Micronesia" :"Micronesia (Federated States of)",
-      "Palestine" :"Palestinian",
-      "Korea" :"Rep. of Korea",
-      "Moldova" :"Rep. of Moldova",
-      "Russia" :"Russian Federation",
-      "St. Kitts and Nevis" :"Saint Kitts and Nevis",
-      "St. Vin. and Gren." :"Saint Vincent and the Grenadines",
-      "St. Pierre and Miquelon" :"Saint-Pierre-et-Miquelon",
-      "" :"Sao Tome and Principe",
-      "Serbia" :"Serbia and Kosovo: S/RES/1244 (1999)",
-      "" :"Seychelles",
-      "" :"Sint Maarten (Dutch part)",
-      "Solomon Is." :"Solomon Islands",
-      "S. Sudan" :"South Sudan",
-      "" :"Stateless",
-      "Syria" :"Syrian Arab Rep.",
-      "Macedonia" :"The former Yugoslav Republic of Macedonia",
-      "" :"Tibetan",
-      "Turks and Caicos Is." :"Turks and Caicos Islands",
-      "" :"Tuvalu",
-      "Tanzania" :"United Rep. of Tanzania",
-      "United States" :"United States of America",
-      "" :"Various",
-      "Venezuela" :"Venezuela (Bolivarian Republic of)",
-      "Vietnam" :"Viet Nam",
-      "Wallis and Futuna Is." :"Wallis and Futuna Islands ",
-      "W. Sahara" :"Western Sahara"
-    }
+      var temp = d.properties.name
+      if (map_to_unhrc[temp]!== undefined){
+        temp = map_to_unhrc[temp]
+      }
+      try {
+        var opacity = d3.max([originOpacityScale(originTotals.filter(function(e) {return e.key == temp})[0].value),destinationOpacityScale(destinationTotals.filter(function(e) {return e.key == temp})[0].value)])
+      } catch (e) {
+        console.log(d.properties.name)
+        var error = true
+      } finally {
+        if(error == true){
+          return 0.6
+        } else {
+          return opacity
+        }
+              // console.log(d.properties.name)
+              // console.log(opacity)
+              // return opacity
+            }
+          })
+
+  }
 
 
-    function wrap(text, width) {
-      text.each(function() {
-        var text = d3.select(this),
-        words = text.text().split(/\s+/).reverse(),
-        word,
-        line = [],
-        lineNumber = 0,
+  var unhrc_to_map = {
+    "Antigua and Barbuda" :"Antigua and Barb.",
+    "Bolivia (Plurinational State of)" :"Bolivia",
+    "Bosnia and Herzegovina" :"Bosnia and Herz.",
+    "British Virgin Islands" :"British Virgin Is.",
+    "Brunei Darussalam" :"Brunei",
+    "Côte d'Ivoire" :"Ivory Coast",
+    "Cabo Verde" :"Cape Verde",
+    "Cayman Islands" :"Cayman Is.",
+    "China, Hong Kong SAR" :"Hong Kong",
+    "China, Macao SAR" :"Macao",
+    "Congo, Republic of" :"Congo",
+    "Cook Islands" :"Cook Is.",
+    "Curaçao" :"",
+    "Czechia" :"Czech Rep.",
+    "Dem. People's Rep. of Korea" :"Dem. Rep. Korea",
+    "Dem. Rep. of the Congo" :"Dem. Rep. Congo",
+    "Equatorial Guinea" :"Eq. Guinea",
+    "French Guiana" :"",
+    "Gibraltar" :"",
+    "Guadeloupe" :"",
+    "Iran (Islamic Rep. of)" :"Iran",
+    "Lao People's Dem. Rep." :"Lao PDR",
+    "Maldives" :"",
+    "Marshall Islands" :"Marshall Is.",
+    "Mauritius" :"",
+    "Micronesia (Federated States of)" :"Micronesia",
+    "Palestinian" :"Palestine",
+    "Rep. of Korea" :"Korea",
+    "Rep. of Moldova" :"Moldova",
+    "Russian Federation" :"Russia",
+    "Saint Kitts and Nevis" :"St. Kitts and Nevis",
+    "Saint Vincent and the Grenadines" :"St. Vin. and Gren.",
+    "Saint-Pierre-et-Miquelon" :"St. Pierre and Miquelon",
+    "Sao Tome and Principe" :"",
+    "Serbia and Kosovo: S/RES/1244 (1999)" :"Serbia",
+    "Seychelles" :"",
+    "Sint Maarten (Dutch part)" :"",
+    "Solomon Islands" :"Solomon Is.",
+    "South Sudan" :"S. Sudan",
+    "Stateless" :"",
+    "Syrian Arab Rep." :"Syria",
+    "The former Yugoslav Republic of Macedonia" :"Macedonia",
+    "Tibetan" :"",
+    "Turks and Caicos Islands" :"Turks and Caicos Is.",
+    "Tuvalu" :"",
+    "United Rep. of Tanzania" :"Tanzania",
+    "United States of America" :"United States",
+    "Various" :"",
+    "Venezuela (Bolivarian Republic of)" :"Venezuela",
+    "Viet Nam" :"Vietnam",
+    "Wallis and Futuna Islands " :"Wallis and Futuna Is.",
+    "Western Sahara" :"W. Sahara"
+  }
+
+
+  var map_to_unhrc = {
+    "Antigua and Barb." :"Antigua and Barbuda",
+    "Bolivia" :"Bolivia (Plurinational State of)",
+    "Bosnia and Herz." :"Bosnia and Herzegovina",
+    "British Virgin Is." :"British Virgin Islands",
+    "Brunei" :"Brunei Darussalam",
+    "Ivory Coast" :"Côte d'Ivoire",
+    "Cape Verde" :"Cabo Verde",
+    "Cayman Is." :"Cayman Islands",
+    "Hong Kong" :"China, Hong Kong SAR",
+    "Macao" :"China, Macao SAR",
+    "Congo" :"Congo, Republic of",
+    "Cook Is." :"Cook Islands",
+    "" :"Curaçao",
+    "Czech Rep." :"Czechia",
+    "Dem. Rep. Korea" :"Dem. People's Rep. of Korea",
+    "Dem. Rep. Congo" :"Dem. Rep. of the Congo",
+    "Eq. Guinea" :"Equatorial Guinea",
+    "" :"French Guiana",
+    "" :"Gibraltar",
+    "" :"Guadeloupe",
+    "Iran" :"Iran (Islamic Rep. of)",
+    "Lao PDR" :"Lao People's Dem. Rep.",
+    "" :"Maldives",
+    "Marshall Is." :"Marshall Islands",
+    "" :"Mauritius",
+    "Micronesia" :"Micronesia (Federated States of)",
+    "Palestine" :"Palestinian",
+    "Korea" :"Rep. of Korea",
+    "Moldova" :"Rep. of Moldova",
+    "Russia" :"Russian Federation",
+    "St. Kitts and Nevis" :"Saint Kitts and Nevis",
+    "St. Vin. and Gren." :"Saint Vincent and the Grenadines",
+    "St. Pierre and Miquelon" :"Saint-Pierre-et-Miquelon",
+    "" :"Sao Tome and Principe",
+    "Serbia" :"Serbia and Kosovo: S/RES/1244 (1999)",
+    "" :"Seychelles",
+    "" :"Sint Maarten (Dutch part)",
+    "Solomon Is." :"Solomon Islands",
+    "S. Sudan" :"South Sudan",
+    "" :"Stateless",
+    "Syria" :"Syrian Arab Rep.",
+    "Macedonia" :"The former Yugoslav Republic of Macedonia",
+    "" :"Tibetan",
+    "Turks and Caicos Is." :"Turks and Caicos Islands",
+    "" :"Tuvalu",
+    "Tanzania" :"United Rep. of Tanzania",
+    "United States" :"United States of America",
+    "" :"Various",
+    "Venezuela" :"Venezuela (Bolivarian Republic of)",
+    "Vietnam" :"Viet Nam",
+    "Wallis and Futuna Is." :"Wallis and Futuna Islands ",
+    "W. Sahara" :"Western Sahara"
+  }
+
+
+  function wrap(text, width) {
+    text.each(function() {
+      var text = d3.select(this),
+      words = text.text().split(/\s+/).reverse(),
+      word,
+      line = [],
+      lineNumber = 0,
         lineHeight = 1.1, // ems
         y = 0,
         dy = 0,
@@ -554,5 +675,5 @@
           }
         }
       });
-    }
+  }
 
