@@ -135,28 +135,34 @@
         // add zoom functionality
         .call(zoom);
 
+        var originwidth = $("#origin").width()
+        var originheight = $("#origin").height()
+
+        var destinationwidth = $("#destination").width()
+        var destinationheight = $("#destination").height()
+
         var originsvg = d3
         .select("#origin")
         .append("svg")
-        .attr("width", $("#origin").width())
-        .attr("height", $("#origin").height())
+        .attr("width", originwidth)
+        .attr("height", originheight)
 
 
 
         var destinationsvg = d3
         .select("#destination")
         .append("svg")
-        .attr("width", $("#destination").width())
-        .attr("height", $("#destination").height())
+        .attr("width", destinationwidth)
+        .attr("height", destinationheight)
 
         var origintitle = originsvg.append("text")
         .attr("class","bar-title")
-        .attr("transform","translate(" + ($("#destination").width()/2)+ ",40)")
+        .attr("transform","translate(" + (originwidth*0.55)+ ","+(originheight*0.075)+")")
         .text("")
 
         var destinationtitle = destinationsvg.append("text")
         .attr("class","bar-title")
-        .attr("transform","translate(" + ($("#destination").width()/2)+ ",40)")
+        .attr("transform","translate(" + (destinationwidth*0.55)+ ","+ (destinationheight*0.075) +")")
         .text("")
 
         d3.queue()
@@ -176,7 +182,7 @@
             var originTotals = d3.nest().key(function(d) {return d.Origin}).rollup(function(v) {return d3.sum(v, function(d) {return d.Population})}).entries(countryPairTotals)
             var destinationTotals = d3.nest().key(function(d) {return d["Country/territory of asylum/residence"]}).rollup(function(v) {return d3.sum(v, function(d) {return d.Population})}).entries(countryPairTotals)
 
-            debugger;
+            // debugger;
 
             var originRedColorScale = d3.scalePow().exponent(0.3).range([208,208]).domain(d3.extent(originTotals.map(d=> d.value+1)))
             var originBlueColorScale = d3.scalePow().exponent(0.3).range([208,50]).domain(d3.extent(originTotals.map(d=> d.value+1)))
@@ -397,8 +403,6 @@
 
       destinationBarData = d3.nest().key(function(d) {return d["Country/territory of asylum/residence"]}).rollup(function(v) {return d3.sum(v, function(d) {return d.Population})}).entries(destinationBarData)
 
-
-
       var origincountryData = refugeedata.filter(function(d) {return d["Country/territory of asylum/residence"] == country && d["Population"] > 0})
       var originTotalData = origincountryData.filter(function(d) {return d["Type of population"] == "Total Refugee and people in refugee-like situations"})
       originTotalData.sort(function(a,b) {
@@ -414,10 +418,12 @@
 
     function drawCountryCharts(destinationBarData, originBarData) {
 
+      debugger;
 
-      var originx = d3.scaleLinear().rangeRound([0,250]).domain([0,d3.max(originBarData, function(d) {return +d["value"]})]).nice()
-      originy = d3.scaleBand().range([0,360]).padding(0.1).domain(originBarData.map(function(d) {return d["key"]})),
-      origing = originsvg.append("g").attr("transform","translate(" +100 + "," + 70 + ")");
+
+      var originx = d3.scaleLinear().rangeRound([0,originwidth*0.62]).domain([0,d3.max(originBarData, function(d) {return +d["value"]})]).nice()
+      originy = d3.scaleBand().range([0,originheight*0.8]).padding(0.1).domain(originBarData.map(function(d) {return d["key"]})),
+      origing = originsvg.append("g").attr("transform","translate(" +(originwidth*0.3) + "," + (originheight*0.15) + ")");
 
       origing.append("g")
       .attr("class", "axis")
@@ -445,9 +451,9 @@
       });
 
 
-      var destinationx = d3.scaleLinear().rangeRound([0,250]).domain([0,d3.max(destinationBarData, function(d) {return +d["value"]})]).nice()
-      destinationy = d3.scaleBand().range([0,360]).padding(0.1).domain(destinationBarData.map(function(d) {return d["key"]})),
-      destinationg = destinationsvg.append("g").attr("transform","translate(" +100 + "," + 70 + ")");
+      var destinationx = d3.scaleLinear().rangeRound([0,destinationwidth*0.62]).domain([0,d3.max(destinationBarData, function(d) {return +d["value"]})]).nice()
+      destinationy = d3.scaleBand().range([0,destinationheight*0.8]).padding(0.1).domain(destinationBarData.map(function(d) {return d["key"]})),
+      destinationg = destinationsvg.append("g").attr("transform","translate(" +(originwidth*0.3) + "," + (originheight*0.15) + ")");
 
       destinationg.append("g")
       .attr("class", "axis")
