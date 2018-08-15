@@ -146,7 +146,7 @@ var destinationtitle = destinationsvg.append("text")
   .text("")
 
 d3.queue()
-  .defer(d3.json, 'custom.json')
+  .defer(d3.json, 'medium.geo.json')
   .defer(d3.csv, 'refugees.csv')
   .await(function (error, json, csv) {
     if (error) {
@@ -178,11 +178,14 @@ d3.queue()
         .append("path")
         .attr("d", path)
         .attr("id", function (d, i) {
-          return "country" + d.properties.iso_a3;
+          if (d.properties.name == "Kosovo") {
+            debugger;
+          }
+          return "country" + d.properties.adm0_a3;
         })
         .attr("class", "country")
-        .on("mouseover", function (d, i) { d3.select("#countryLabel" + d.properties.iso_a3).style("display", "block"); })
-        .on("mouseout", function (d, i) { d3.select("#countryLabel" + d.properties.iso_a3).style("display", "none"); })
+        .on("mouseover", function (d, i) { d3.select("#countryLabel" + d.properties.adm0_a3).style("display", "block"); })
+        .on("mouseout", function (d, i) { d3.select("#countryLabel" + d.properties.adm0_a3).style("display", "none"); })
         // add an onclick action to zoom into clicked country
         .on("click", function (d, i) {
           isCountry = true
@@ -205,7 +208,7 @@ d3.queue()
         .enter()
         .append("g")
         .attr("class", "countryLabel")
-        .attr("id", function (d) { return "countryLabel" + d.properties.iso_a3; })
+        .attr("id", function (d) { return "countryLabel" + d.properties.adm0_a3; })
         .attr("transform", function (d) { return ("translate(" + path.centroid(d)[0] + "," + path.centroid(d)[1] + ")"); })
         .on("mouseover", function (d, i) { d3.select(this).style("display", "block"); })
         .on("mouseout", function (d, i) { d3.select(this).style("display", "none"); })
@@ -218,7 +221,7 @@ d3.queue()
           }
           createBar(country)
           d3.selectAll(".country").classed("country-on", false);
-          d3.select("#country" + d.properties.iso_a3).classed("country-on", true);
+          d3.select("#country" + d.properties.adm0_a3).classed("country-on", true);
           // boxZoom(path.bounds(d), path.centroid(d), 20);
         });
       // add the text to the label group showing country name
