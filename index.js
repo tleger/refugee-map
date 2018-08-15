@@ -9,6 +9,7 @@ var minZoom;
 var maxZoom;
 
 var refugeedata = []
+var countryPairTotals = []
 
 var isCountry = false;
 
@@ -157,9 +158,7 @@ d3.queue()
 
       refugeedata = csv
 
-      var countryPairTotals = refugeedata.filter(function (d) { return d["Type of population"] == "Total Refugee and people in refugee-like situations" })
-      var originTotals = d3.nest().key(function (d) { return d.Origin }).rollup(function (v) { return d3.sum(v, function (d) { return d.Population }) }).entries(countryPairTotals)
-      var destinationTotals = d3.nest().key(function (d) { return d["Country/territory of asylum/residence"] }).rollup(function (v) { return d3.sum(v, function (d) { return d.Population }) }).entries(countryPairTotals)
+      countryPairTotals = refugeedata.filter(function (d) { return d["Type of population"] == "Total Refugee and people in refugee-like situations" })
 
       countriesGroup = svg.append("g").attr("id", "map");
 
@@ -188,13 +187,11 @@ d3.queue()
         .on("click", function (d, i) {
           isCountry = true
           var country = d.properties.name
-
           if (map_to_unhrc[country] !== undefined) {
             country = map_to_unhrc[country]
           }
           createBar(country)
           var countryPairs = countryPairTotals.filter(function (d) { return d["Country/territory of asylum/residence"] == country || d["Origin"] == country })
-          // debugger;
           getColourForData(countryPairs, country)
           d3.selectAll(".country").classed("country-on", false);
           d3.select(this).classed("country-on", true);
@@ -216,6 +213,9 @@ d3.queue()
         .on("click", function (d, i) {
           isCountry = true
           var country = d.properties.name
+          if (map_to_unhrc[country] !== undefined) {
+            country = map_to_unhrc[country]
+          }
           createBar(country)
           d3.selectAll(".country").classed("country-on", false);
           d3.select("#country" + d.properties.iso_a3).classed("country-on", true);
@@ -240,7 +240,7 @@ d3.queue()
 
       initiateZoom();
       createDefault();
-      
+
 
       countriesGroup.on("click", function () {
         if (isCountry == false) {
@@ -336,9 +336,11 @@ function drawCountryCharts(destinationBarData, originBarData) {
     .attr("height", originy.bandwidth())
     .attr("width", function (d) { return originx(d["value"]); })
     .on("click", function (d) {
-      createBar(d.key)
-      d3.selectAll(".country").classed("country-on", false);
-      d3.select("#country" + d.properties.iso_a3).classed("country-on", true);
+      isCountry = true
+      var country = d.key
+      createBar(country)
+      var countryPairs = countryPairTotals.filter(function (d) { return d["Country/territory of asylum/residence"] == country || d["Origin"] == country })
+      getColourForData(countryPairs, country)
     });
 
   var destinationx = d3.scaleLinear().rangeRound([0, destinationwidth * 0.62]).domain([0, d3.max(destinationBarData, function (d) { return +d["value"] })]).nice(),
@@ -365,38 +367,41 @@ function drawCountryCharts(destinationBarData, originBarData) {
     .attr("height", destinationy.bandwidth())
     .attr("width", function (d) { return destinationx(d["value"]); })
     .on("click", function (d) {
-      createBar(d.key)
-      d3.selectAll(".country").classed("country-on", false);
-      d3.select("#country" + d.properties.iso_a3).classed("country-on", true);
+      isCountry = true
+      var country = d.key
+      createBar(country)
+      var countryPairs = countryPairTotals.filter(function (d) { return d["Country/territory of asylum/residence"] == country || d["Origin"] == country })
+      getColourForData(countryPairs, country)
+
     });
 }
 
 function getColourForData(data, country) {
-  d3.selectAll(".country").style("fill", "rgb(255,255,255").style("opacity", 0.6)
+  var minopacity = 0.9
+  var mincol = 80
+  d3.selectAll(".country").style("fill", "rgb(255,255,255").style("opacity", minopacity)
 
   var originTotals = d3.nest().key(function (d) { return d.Origin }).rollup(function (v) { return d3.sum(v, function (d) { return d.Population }) }).entries(data)
   var destinationTotals = d3.nest().key(function (d) { return d["Country/territory of asylum/residence"] }).rollup(function (v) { return d3.sum(v, function (d) { return d.Population }) }).entries(data)
 
   if (isCountry == true) {
-    originTotals = originTotals.filter(function(d) {return d.key !== country})
-    destinationTotals = destinationTotals.filter(function(d) {return d.key !== country})
+    originTotals = originTotals.filter(function (d) { return d.key !== country })
+    destinationTotals = destinationTotals.filter(function (d) { return d.key !== country })
   }
 
-  // var originRedColorScale = d3.scalePow().exponent(0.3).range([208, 208]).domain(d3.extent(originTotals.map(d => d.value + 1)))
-  // var originBlueColorScale = d3.scalePow().exponent(0.3).range([208, 50]).domain(d3.extent(originTotals.map(d => d.value + 1)))
-  // var originGreenColorScale = d3.scalePow().exponent(0.3).range([208, 50]).domain(d3.extent(originTotals.map(d => d.value + 1)))
-  // var originOpacityScale = d3.scalePow().exponent(0.3).range([0.6, 1]).domain(d3.extent(originTotals.map(d => d.value + 1)))
+  var maxval = d3.max([d3.max(originTotals.map(d => d.value + 1)), d3.max(destinationTotals.map(d => d.value + 1))])
 
-  // var destinationRedColorScale = d3.scalePow().exponent(0.3).range([208, 50]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
-  // var destinationBlueColorScale = d3.scalePow().exponent(0.3).range([208, 208]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
-  // var destinationGreenColorScale = d3.scalePow().exponent(0.3).range([208, 50]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
-  // var destinationOpacityScale = d3.scalePow().exponent(0.3).range([0.6, 1]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
+  // var originRedColorScale = d3.scalePow().exponent(0.6).range([mincol, 255]).domain(d3.extent(originTotals.map(d => d.value + 1)))
+  // var originOpacityScale = d3.scalePow().exponent(0.3).range([minopacity, 1]).domain(d3.extent(originTotals.map(d => d.value + 1)))
 
-  var originRedColorScale = d3.scalePow().exponent(0.5).range([120, 255]).domain(d3.extent(originTotals.map(d => d.value + 1)))
-  var originOpacityScale = d3.scalePow().exponent(0.3).range([0.6, 1]).domain(d3.extent(originTotals.map(d => d.value + 1)))
+  // var destinationBlueColorScale = d3.scalePow().exponent(0.6).range([mincol, 255]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
+  // var destinationOpacityScale = d3.scalePow().exponent(0.3).range([minopacity, 1]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
 
-  var destinationBlueColorScale = d3.scalePow().exponent(0.5).range([120, 255]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
-  var destinationOpacityScale = d3.scalePow().exponent(0.3).range([0.6, 1]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
+  var originRedColorScale = d3.scalePow().exponent(0.5).range([mincol, 255]).domain([1, maxval])
+  var originOpacityScale = d3.scalePow().exponent(0.3).range([minopacity, 1]).domain([1, maxval])
+
+  var destinationBlueColorScale = d3.scalePow().exponent(0.5).range([mincol, 255]).domain([1, maxval])
+  var destinationOpacityScale = d3.scalePow().exponent(0.3).range([minopacity, 1]).domain([1, maxval])
 
   d3.selectAll(".country").style("fill", function (d) {
 
@@ -406,30 +411,23 @@ function getColourForData(data, country) {
     }
 
     try {
-      // var red = d3.min([originRedColorScale(originTotals.filter(function (e) { return e.key == temp })[0].value), destinationRedColorScale(destinationTotals.filter(function (e) { return e.key == temp })[0].value)])
-      // var blue = d3.min([originBlueColorScale(originTotals.filter(function (e) { return e.key == temp })[0].value), destinationBlueColorScale(destinationTotals.filter(function (e) { return e.key == temp })[0].value)])
-      // var green = d3.min([originGreenColorScale(originTotals.filter(function (e) { return e.key == temp })[0].value), destinationGreenColorScale(destinationTotals.filter(function (e) { return e.key == temp })[0].value)])
 
-      if (temp == "Yemen") {
-        debugger;
-      }
-
-      if ( originTotals.filter(function (e) { return e.key == temp })[0] == undefined) {
-        var red = 120
+      if (originTotals.filter(function (e) { return e.key == temp })[0] == undefined) {
+        var red = mincol
       } else {
         var red = originRedColorScale(originTotals.filter(function (e) { return e.key == temp })[0].value + 1)
       }
 
       if (destinationTotals.filter(function (e) { return e.key == temp })[0] == undefined) {
-        var blue = 120
+        var blue = mincol
       } else {
         var blue = destinationBlueColorScale(destinationTotals.filter(function (e) { return e.key == temp })[0].value + 1)
       }
       // var green = d3.max([red, blue])
-      var green = d3.min([d3.max([red, blue]),120])
+      var green = d3.min([d3.max([red, blue]), mincol])
 
     } catch (e) {
-      return "rgb(120,120,120)"
+      return "rgb(" + String(mincol) + "," + String(mincol) + "," + String(mincol) + ")"
     } finally {
       return "rgb(" + String(red) + "," + String(green) + "," + String(blue) + ")"
     }
@@ -447,7 +445,7 @@ function getColourForData(data, country) {
         var error = true
       } finally {
         if (error == true) {
-          return 0.6
+          return minopacity
         } else {
           return opacity
         }
