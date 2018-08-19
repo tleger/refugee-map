@@ -178,9 +178,6 @@ d3.queue()
         .append("path")
         .attr("d", path)
         .attr("id", function (d, i) {
-          if (d.properties.name == "Kosovo") {
-            debugger;
-          }
           return "country" + d.properties.adm0_a3;
         })
         .attr("class", "country")
@@ -220,6 +217,8 @@ d3.queue()
             country = map_to_unhrc[country]
           }
           createBar(country)
+          var countryPairs = countryPairTotals.filter(function (d) { return d["Country/territory of asylum/residence"] == country || d["Origin"] == country })
+          getColourForData(countryPairs, country)
           d3.selectAll(".country").classed("country-on", false);
           d3.select("#country" + d.properties.adm0_a3).classed("country-on", true);
           // boxZoom(path.bounds(d), path.centroid(d), 20);
@@ -254,6 +253,11 @@ d3.queue()
       })
 
       svg.append("text")
+        .attr("transform", "translate( 20, " + ($("#map-holder").height() - 35) + ")")
+        .text(d3.format(",")(18469930)+ " refugees worldwide accounted for in this dataset")
+        .style("fill", "white")
+      
+      svg.append("text")
         .attr("transform", "translate( 20, " + ($("#map-holder").height() - 20) + ")")
         .text("Data as at mid-2016, source: http://popstats.unhcr.org/en/overview")
         .style("fill", "white")
@@ -282,8 +286,7 @@ function createDefault() {
 }
 
 function createBar(country) {
-  origintitle.text(country + " hosts refugees from..")
-  destinationtitle.text("Refugees from " + country + " are hosted in..")
+  
 
   originsvg.selectAll("g").remove()
   destinationsvg.selectAll("g").remove()
@@ -309,6 +312,21 @@ function createBar(country) {
   var originBarData = originTotalData.slice(0, 10)
 
   originBarData = d3.nest().key(function (d) { return d.Origin }).rollup(function (v) { return d3.sum(v, function (d) { return d.Population }) }).entries(originBarData)
+
+  var destinationTotal = d3.sum(destinationBarData, function(d) {return d.value})
+  var originTotal = d3.sum(originBarData, function(d) {return d.value})
+
+  if (originTotal>0) {
+    origintitle.text(country + " hosts " +d3.format(",")(originTotal)+ " refugees from..")
+  } else {
+    origintitle.text(country + " hosts no refugees")
+  }
+
+  if (destinationTotal>0) {
+    destinationtitle.text(d3.format(",")(destinationTotal)+ " Refugees from " + country + " are hosted in..")
+  } else {
+    destinationtitle.text("No refugees originate from "+country)
+  }
 
   drawCountryCharts(destinationBarData, originBarData)
 }
