@@ -286,8 +286,6 @@ function createDefault() {
 }
 
 function createBar(country) {
-  
-
   originsvg.selectAll("g").remove()
   destinationsvg.selectAll("g").remove()
 
@@ -418,11 +416,70 @@ function getColourForData(data, country) {
   // var destinationBlueColorScale = d3.scalePow().exponent(0.6).range([mincol, 255]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
   // var destinationOpacityScale = d3.scalePow().exponent(0.3).range([minopacity, 1]).domain(d3.extent(destinationTotals.map(d => d.value + 1)))
 
-  var originRedColorScale = d3.scalePow().exponent(0.5).range([mincol, 255]).domain([1, maxval])
+  var originRedColorScale = d3.scalePow().exponent(0.4).range([mincol, 255]).domain([1, maxval])
   var originOpacityScale = d3.scalePow().exponent(0.3).range([minopacity, 1]).domain([1, maxval])
 
-  var destinationBlueColorScale = d3.scalePow().exponent(0.5).range([mincol, 255]).domain([1, maxval])
+  var destinationBlueColorScale = d3.scalePow().exponent(0.4).range([mincol, 255]).domain([1, maxval])
   var destinationOpacityScale = d3.scalePow().exponent(0.3).range([minopacity, 1]).domain([1, maxval])
+
+
+  destinationsvg.selectAll(".bar")
+    .style("fill", function(d){
+      var temp = d.key
+    if (map_to_unhrc[temp] !== undefined) {
+      temp = map_to_unhrc[temp]
+    }
+
+    try {
+      if (originTotals.filter(function (e) { return e.key == temp })[0] == undefined) {
+        var red = mincol
+      } else {
+        var red = originRedColorScale(originTotals.filter(function (e) { return e.key == temp })[0].value + 1)
+      }
+
+      if (destinationTotals.filter(function (e) { return e.key == temp })[0] == undefined) {
+        var blue = mincol
+      } else {
+        var blue = destinationBlueColorScale(destinationTotals.filter(function (e) { return e.key == temp })[0].value + 1)
+      }
+      // var green = d3.max([red, blue])
+      var green = d3.min([d3.max([red, blue]), mincol])
+
+    } catch (e) {
+      return "rgb(" + String(mincol) + "," + String(mincol) + "," + String(mincol) + ")"
+    } finally {
+      return "rgb(" + String(mincol) + "," + String(mincol) + "," + String(blue) + ")"
+    }
+    })
+
+    originsvg.selectAll(".bar")
+    .style("fill", function(d){
+      var temp = d.key
+    if (map_to_unhrc[temp] !== undefined) {
+      temp = map_to_unhrc[temp]
+    }
+
+    try {
+      if (originTotals.filter(function (e) { return e.key == temp })[0] == undefined) {
+        var red = mincol
+      } else {
+        var red = originRedColorScale(originTotals.filter(function (e) { return e.key == temp })[0].value + 1)
+      }
+
+      if (destinationTotals.filter(function (e) { return e.key == temp })[0] == undefined) {
+        var blue = mincol
+      } else {
+        var blue = destinationBlueColorScale(destinationTotals.filter(function (e) { return e.key == temp })[0].value + 1)
+      }
+      // var green = d3.max([red, blue])
+      var green = d3.min([d3.max([red, blue]), mincol])
+
+    } catch (e) {
+      return "rgb(" + String(mincol) + "," + String(mincol) + "," + String(mincol) + ")"
+    } finally {
+      return "rgb(" + String(red) + "," + String(mincol) + "," + String(mincol) + ")"
+    }
+    })
 
   d3.selectAll(".country").style("fill", function (d) {
 
