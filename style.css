@@ -44,6 +44,7 @@ svg rect {
 }
 .countryLabel{
   display: none;   /* hide all country labels by default */
+  cursor: default;
 }
 .countryName{
   fill: #FFFAFF;   /* country label text colour */
