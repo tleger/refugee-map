@@ -148,6 +148,7 @@ var destinationtitle = destinationsvg.append("text")
 d3.queue()
   .defer(d3.json, 'medium.geo.json')
   .defer(d3.csv, 'refugees.csv')
+  // .defer(d3.csv, 'kaggle_clean.csv')
   .await(function (error, json, csv) {
     if (error) {
       console.error('error loading')
@@ -158,7 +159,9 @@ d3.queue()
 
       refugeedata = csv
 
-      countryPairTotals = refugeedata.filter(function (d) { return d["Type of population"] == "Total Refugee and people in refugee-like situations" })
+      // refugeedata = refugeedata.filter(function(d) { return d["Year"] == "2016"})
+
+      countryPairTotals = refugeedata.filter(function (d) { return d["Type of population"] == "Total Refugee and people in refugee-like situations"})
 
       countriesGroup = svg.append("g").attr("id", "map");
 
@@ -192,6 +195,7 @@ d3.queue()
           }
           createBar(country)
           var countryPairs = countryPairTotals.filter(function (d) { return d["Country/territory of asylum/residence"] == country || d["Origin"] == country })
+          debugger;
           getColourForData(countryPairs, country)
           d3.selectAll(".country").classed("country-on", false);
           d3.select(this).classed("country-on", true);
